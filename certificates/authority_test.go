@@ -45,7 +45,14 @@ var _ = Describe("Root certificate tests", func() {
 		})
 	})
 	Context("We have a signing certificate", func() {
+		signingCert, signingKey, _ := CreateTemplateRootCertificateAndKey("authority.example.com")
 		It("Should create a signed certificate", func() {
+			var clientCert, _, err = CreateTemplateCertificateAndKey("client.example.com")
+			Expect(err).Should(BeNil())
+			var w = &SpyWriter{}
+			Expect(WritePemCertFile(*clientCert, *signingCert, &signingKey, w)).Should(BeNil())
+			Expect(len(w.buffer) > 0).Should(BeTrue())
+			Expect(strings.HasPrefix(w.ToString(), "-----BEGIN CERTIFICATE-----")).Should(BeTrue())
 
 		})
 	})

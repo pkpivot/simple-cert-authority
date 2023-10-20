@@ -30,6 +30,25 @@ func CreateTemplateRootCertificateAndKey(name string) (*x509.Certificate, rsa.Pr
 	return cert, *privateKey, err
 }
 
+func CreateTemplateCertificateAndKey(url string) (*x509.Certificate, rsa.PrivateKey, error) {
+	var privateKey, err = rsa.GenerateKey(rand.Reader, 2048)
+
+	cert := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization: []string{url},
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(time.Hour * 24 * 365),
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		IsCA:                  false,
+	}
+
+	return cert, *privateKey, err
+}
+
 func WritePemPrivateKey(key *rsa.PrivateKey, w io.Writer) error {
 	bytes, err := x509.MarshalPKCS8PrivateKey(key)
 	if err != nil {
