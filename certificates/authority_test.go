@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/x509"
+	"fmt"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"strings"
@@ -35,12 +36,16 @@ var _ = Describe("Root certificate tests", func() {
 			var w = &SpyWriter{}
 			Expect(WritePemCertFile(*cert, *cert, &key, w)).Should(BeNil())
 			Expect(len(w.buffer) > 0).Should(BeTrue())
+			fmt.Println(w.ToString())
 			Expect(strings.HasPrefix(w.ToString(), "-----BEGIN CERTIFICATE-----")).Should(BeTrue())
+			Expect(strings.HasSuffix(strings.TrimSpace(w.ToString()), "-----END CERTIFICATE-----")).Should(BeTrue())
 
 			w = &SpyWriter{}
+
 			Expect(WritePemPrivateKey(&key, w)).Should(BeNil())
 			Expect(len(w.buffer) > 0).Should(BeTrue())
 			Expect(strings.HasPrefix(w.ToString(), "-----BEGIN PRIVATE KEY-----")).Should(BeTrue())
+			Expect(strings.HasSuffix(strings.TrimSpace(w.ToString()), "-----END PRIVATE KEY-----")).Should(BeTrue())
 
 		})
 	})

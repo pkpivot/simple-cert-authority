@@ -6,11 +6,16 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"flag"
+	"fmt"
 	"io"
 	"log"
 	"math/big"
+	"os"
 	"time"
 )
+
+const RootAuthority = "rootauth.example.com"
 
 func CreateTemplateRootCertificateAndKey(name string) (*x509.Certificate, rsa.PrivateKey, error) {
 	var privateKey, err = rsa.GenerateKey(rand.Reader, 2048)
@@ -68,7 +73,53 @@ func WritePemCertFile(template x509.Certificate, issuer x509.Certificate, key *r
 	if err := pem.Encode(w, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}); err != nil {
 		log.Fatalf("Failed to write certificate data: %v", err)
 	}
-
-	_, err = w.Write(derBytes)
 	return err
+}
+
+func CreateSigningSet(filename string, host string) {
+	certName := filename + ".pem"
+	keyName := filename + "-key.pem"
+
+	certOut, err := os.Create(certName)
+	if err != nil {
+		log.Fatalf("Failed to open certificate file for writingg: %v", err)
+	}
+
+	keyOut, err := os.Create(keyName)
+	if err != nil {
+		log.Fatalf("Failed to open key file for writing: %v", err)
+	}
+
+	cert, key, err := CreateTemplateRootCertificateAndKey(host)
+	if err != nil {
+		log.Fatalf("Could not generate private key and certificate: %v", err)
+	}
+
+	err2 := WritePemCertFile(*cert, *cert, &key, certOut)
+	if err2 != nil {
+		log.Fatalf("Could not writer certificate: %v", err)
+	}
+
+	err3 := WritePemPrivateKey(&key, keyOut)
+	if err3 != nil {
+		log.Fatalf("Could not writer certificate: %v", err)
+	}
+}
+
+func main() {
+
+	rootCmd := flag.NewFlagSet("root", flag.ExitOnError)
+	host := rootCmd.String("host", "signing.example.com", "URL of signing authority")
+	filename := rootCmd.String("filename", "certificate", "fileame for the cert ")
+
+	if len(os.Args) < 2 {
+		fmt.Println("Expected root command")
+		os.Exit(1)
+	}
+
+	switch os.Args[1] {
+	case "root":
+		rootCmd.Parse(os.Args[2:])
+		CreateSigningSet(*filename, *host)
+	}
 }
