@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -16,8 +17,6 @@ import (
 	"strings"
 	"time"
 )
-
-const RootAuthority = "rootauth.example.com"
 
 func CreateTemplateRootCertificateAndKey(name string) (*x509.Certificate, rsa.PrivateKey, error) {
 	var privateKey, err = rsa.GenerateKey(rand.Reader, 2048)
@@ -78,9 +77,35 @@ func WritePemCertFile(template x509.Certificate, issuer x509.Certificate, key *r
 	return err
 }
 
+func ReadPemCert(certificate []byte) (*x509.Certificate, error) {
+	derBytes, rest := pem.Decode(certificate)
+	if len(rest) > 0 {
+		return nil, errors.New("cannot read certificate chain")
+	}
+
+	return x509.ParseCertificate(derBytes.Bytes)
+}
+
+func ReadPemKey(key []byte) (*rsa.PrivateKey, error) {
+	derBytes, rest := pem.Decode(key)
+	if len(rest) > 0 {
+		return nil, errors.New("cannot read key and certificate chain")
+	}
+
+	parsed, err := x509.ParsePKCS8PrivateKey(derBytes.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	rsaKey, ok := parsed.(*rsa.PrivateKey)
+	if !ok {
+		return nil, errors.New("did not contain rsa private key")
+	}
+	return rsaKey, nil
+}
+
 func CreateSigningSet(filename string, host string) {
-	certName := filename + ".pem"
-	keyName := filename + "-key.pem"
+	certName, keyName := CertSetNames(filename)
 
 	certOut, err := os.Create(certName)
 	if err != nil {
@@ -109,6 +134,10 @@ func CreateSigningSet(filename string, host string) {
 }
 
 func CreateSignedCertificate(filename string, host string, signingSet string) {
+	//certName, keyName := CertSetNames(filename)
+	//
+	//x509.
+	//
 	//certTemplate, privateKey, err := CreateTemplateCertificateAndKey(host)
 	//if err != nil {
 	//	log.Fatalf("Could not create cert template and key %v", err)
