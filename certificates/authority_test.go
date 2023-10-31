@@ -61,6 +61,19 @@ var _ = Describe("Root certificate tests", func() {
 
 		})
 	})
+
+	Context("We are creating key and cert filenames", func() {
+		It("Should generate certset.pem and certset-key.pem names", func() {
+			certName, keyName := CertSetNames("certificate")
+			Expect(certName).Should(Equal("certificate.pem"))
+			Expect(keyName).Should(Equal("certificate-key.pem"))
+		})
+		It("Should ignore extensions in certificate set name", func() {
+			certName, keyName := CertSetNames("certificate.xxx")
+			Expect(certName).Should(Equal("certificate.pem"))
+			Expect(keyName).Should(Equal("certificate-key.pem"))
+		})
+	})
 })
 
 type SpyWriter struct {

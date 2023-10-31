@@ -12,6 +12,8 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -106,11 +108,36 @@ func CreateSigningSet(filename string, host string) {
 	}
 }
 
+func CreateSignedCertificate(filename string, host string, signingSet string) {
+	//certTemplate, privateKey, err := CreateTemplateCertificateAndKey(host)
+	//if err != nil {
+	//	log.Fatalf("Could not create cert template and key %v", err)
+	//}
+	//
+	//file, err := os.Create(filename)
+	//if err != nil {
+	//	log.Fatalf("Failed to open key file for writing: %v", err)
+	//}
+	//
+	//err2 := WritePemCertFile(certTemplate, signingCert, signingKey, file)
+}
+
+func CertSetNames(setName string) (string, string) {
+	setName = strings.TrimSuffix(setName, filepath.Ext(setName))
+	certName := setName + ".pem"
+	keyName := setName + "-key.pem"
+	return certName, keyName
+}
+
 func main() {
 
 	rootCmd := flag.NewFlagSet("root", flag.ExitOnError)
 	host := rootCmd.String("host", "signing.example.com", "URL of signing authority")
 	filename := rootCmd.String("filename", "certificate", "fileame for the cert ")
+
+	signCmd := flag.NewFlagSet("sign", flag.ExitOnError)
+	signedHost := signCmd.String("host", "signed.example.com", "URL of host to created signed certificate for")
+	signedFilename := signCmd.String("filename", "signed-certificate", "Name of the signed ")
 
 	if len(os.Args) < 2 {
 		fmt.Println("Expected root command")
@@ -121,5 +148,9 @@ func main() {
 	case "root":
 		rootCmd.Parse(os.Args[2:])
 		CreateSigningSet(*filename, *host)
+
+	case "sign":
+		rootCmd.Parse(os.Args[2:])
+		CreateSignedCertificate(*signedFilename, *signedHost, "signing-certificate")
 	}
 }
