@@ -22,7 +22,7 @@ func CreateTemplateRootCertificateAndKey(name string) (*x509.Certificate, rsa.Pr
 	var privateKey, err = rsa.GenerateKey(rand.Reader, 2048)
 
 	cert := &x509.Certificate{
-		SerialNumber: big.NewInt(1),
+		SerialNumber: SerialNumber(),
 		Subject: pkix.Name{
 			Organization: []string{name},
 		},
@@ -40,7 +40,7 @@ func CreateTemplateCertificateAndKey(url string) (*x509.Certificate, rsa.Private
 	var privateKey, err = rsa.GenerateKey(rand.Reader, 2048)
 
 	cert := &x509.Certificate{
-		SerialNumber: big.NewInt(1),
+		SerialNumber: SerialNumber(),
 		Subject: pkix.Name{
 			Organization: []string{url},
 		},
@@ -131,6 +131,15 @@ func CreateSigningSet(filename string, host string) {
 	if err3 != nil {
 		log.Fatalf("Could not writer certificate: %v", err)
 	}
+}
+
+func SerialNumber() *big.Int {
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		log.Fatalf("Failed to generate serial number: %v", err)
+	}
+	return serialNumber
 }
 
 func CreateSignedCertificate(filename string, host string, signingSet string) {

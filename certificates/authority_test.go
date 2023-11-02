@@ -30,6 +30,13 @@ var _ = Describe("Root certificate tests", func() {
 
 		})
 
+		It("Should always have a different serial number", func() {
+			var cert1, _, _ = CreateTemplateRootCertificateAndKey("fred")
+			var cert2, _, _ = CreateTemplateRootCertificateAndKey("fred")
+
+			Expect(*cert1.SerialNumber).ShouldNot(Equal(*cert2.SerialNumber))
+		})
+
 		It("Should be turned into PEM stream", func() {
 			var cert, key, _ = CreateTemplateRootCertificateAndKey("fred")
 			var w = &SpyWriter{}
@@ -57,6 +64,12 @@ var _ = Describe("Root certificate tests", func() {
 			Expect(len(w.buffer) > 0).Should(BeTrue())
 			Expect(strings.HasPrefix(w.ToString(), "-----BEGIN CERTIFICATE-----")).Should(BeTrue())
 
+		})
+
+		It("Should always use a different serial number", func() {
+			var cert1, _, _ = CreateTemplateCertificateAndKey("client.example.com")
+			var cert2, _, _ = CreateTemplateCertificateAndKey("client.example.com")
+			Expect(*cert1.SerialNumber).ShouldNot(Equal(*cert2.SerialNumber))
 		})
 	})
 
