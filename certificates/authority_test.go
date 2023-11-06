@@ -63,6 +63,8 @@ var _ = Describe("Root certificate tests", func() {
 			Expect(WritePemCertFile(*clientCert, *signingCert, &signingKey, w)).Should(BeNil())
 			Expect(len(w.buffer) > 0).Should(BeTrue())
 			Expect(strings.HasPrefix(w.ToString(), "-----BEGIN CERTIFICATE-----")).Should(BeTrue())
+			Expect(len(clientCert.DNSNames) > 0).Should(BeTrue())
+			Expect(clientCert.DNSNames[0]).Should(Equal("client.example.com"))
 
 		})
 

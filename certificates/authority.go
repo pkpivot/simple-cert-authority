@@ -51,6 +51,7 @@ func CreateTemplateCertificateAndKey(url string) (*x509.Certificate, rsa.Private
 		BasicConstraintsValid: true,
 		IsCA:                  false,
 	}
+	cert.DNSNames = append(cert.DNSNames, url)
 
 	return cert, *privateKey, err
 }
@@ -111,8 +112,11 @@ func CreateSigningSet(filename string, host string) {
 	if err != nil {
 		log.Fatalf("Failed to open certificate file for writingg: %v", err)
 	}
+	defer certOut.Close()
 
 	keyOut, err := os.Create(keyName)
+	defer keyOut.Close()
+
 	if err != nil {
 		log.Fatalf("Failed to open key file for writing: %v", err)
 	}
@@ -208,7 +212,7 @@ func main() {
 
 	rootCmd := flag.NewFlagSet("root", flag.ExitOnError)
 	host := rootCmd.String("host", "signing.example.com", "URL of signing authority")
-	filename := rootCmd.String("filename", "certificate", "fileame for the cert ")
+	filename := rootCmd.String("filename", "signing-cert", "fileame for the cert ")
 
 	signCmd := flag.NewFlagSet("sign", flag.ExitOnError)
 	signedHost := signCmd.String("host", "signed.example.com", "URL of host to created signed certificate for")
@@ -216,7 +220,7 @@ func main() {
 	signingCert := signCmd.String("signer", "signing-cert", "Name of the signing set")
 
 	if len(os.Args) < 2 {
-		fmt.Println("Expected root command")
+		fmt.Println("Expected root or sign  command")
 		os.Exit(1)
 	}
 
