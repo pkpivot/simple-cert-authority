@@ -28,7 +28,8 @@ func CreateTemplateRootCertificateAndKey(name string) (*x509.Certificate, rsa.Pr
 		},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().Add(time.Hour * 24 * 365),
-		KeyUsage:              x509.KeyUsageCertSign,
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 		IsCA:                  true,
 		SignatureAlgorithm:    x509.SHA512WithRSA}
@@ -37,7 +38,7 @@ func CreateTemplateRootCertificateAndKey(name string) (*x509.Certificate, rsa.Pr
 }
 
 func CreateTemplateCertificateAndKey(url string) (*x509.Certificate, rsa.PrivateKey, error) {
-	var privateKey, err = rsa.GenerateKey(rand.Reader, 2048)
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 
 	cert := &x509.Certificate{
 		SerialNumber: SerialNumber(),
@@ -67,7 +68,7 @@ func WritePemPrivateKey(key *rsa.PrivateKey, w io.Writer) error {
 
 func WritePemCertFile(template x509.Certificate, issuer x509.Certificate, key *rsa.PrivateKey, w io.Writer) error {
 
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &issuer, &key.PublicKey, key)
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &issuer, &(key.PublicKey), key)
 	if err != nil {
 		return err
 	}
@@ -212,7 +213,7 @@ func main() {
 
 	rootCmd := flag.NewFlagSet("root", flag.ExitOnError)
 	host := rootCmd.String("host", "signing.example.com", "URL of signing authority")
-	filename := rootCmd.String("filename", "signing-cert", "fileame for the cert ")
+	filename := rootCmd.String("filename", "signing-cert", "filename for the cert ")
 
 	signCmd := flag.NewFlagSet("sign", flag.ExitOnError)
 	signedHost := signCmd.String("host", "signed.example.com", "URL of host to created signed certificate for")
